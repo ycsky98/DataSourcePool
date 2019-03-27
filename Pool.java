@@ -8,8 +8,10 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
 
@@ -23,25 +25,26 @@ public class Pool implements PoolInterface {
     //采用线程安全的链表队列
     private BlockingQueue<Connection> blockingQueue = new LinkedBlockingDeque<>();
 
-    private static Pool pool = new Pool();
+    private String url;
 
-    private static boolean falg = true;
-    private Pool(){
+    private String username;
+
+    private String password;
+
+    private String driver;
+
+    public Pool(String driver,String username,String password,String url){
+        this.url = url;
+        this.username = username;
+        this.password = password;
+        this.driver = driver;
         try {
-            //加载驱动
-            Class.forName(PoolInterface.driver);
+            Class.forName(this.driver);
             for (int i = 0; i < count; i++)
-                this.blockingQueue.offer(DriverManager.getConnection(PoolInterface.url,PoolInterface.username,PoolInterface.password));//入队
-        }catch (Exception e){
+                this.blockingQueue.offer(DriverManager.getConnection(this.url, this.username, this.password));//入队
+        } catch (Exception e) {
             e.printStackTrace();
         }
-    }
-
-    public static Pool getPool(){
-        if (falg){
-            return pool;
-        }
-        throw new RuntimeException("被单例攻击");
     }
 
     @Override
@@ -73,10 +76,10 @@ public class Pool implements PoolInterface {
 }
 class test{
     public static void main(String[] args){
-        Pool pool = Pool.getPool();
+        /*Pool pool = new Pool();
         List<Connection> list = new ArrayList<>();
         for (int i = 0; i < 21; i++){
             list.add(pool.getConnection());
-        }
+        }*/
     }
 }
